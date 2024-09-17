@@ -1,0 +1,11 @@
+Metier\Modele\WorkType.class
+DAO\WorkTypeDAO.class
+Metier\Service\Service.class
+DAO\JpaUtil.class
+Metier\Service\GeoNetApi.class
+DAO\ClientDAO.class
+main\Main.class
+Metier\Modele\Client.class
+DAO\PublicationDAO.class
+DAO\JpaUtil$1.class
+Metier\Modele\Publication.class

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- Base de données configuration -->
+        <property name="hibernate.connection.driver_class">org.apache.derby.client.ClientAutoloadedDriver</property>
+        <property name="hibernate.connection.url">jdbc:derby://localhost:1527/database</property>
+        <property name="hibernate.connection.username">database</property>
+        <property name="hibernate.connection.password">database</property>
+
+        <!-- Dialecte de base de données -->
+        <property name="hibernate.dialect">org.hibernate.dialect.DerbyDialect</property>
+
+
+        <!-- Options supplémentaires -->
+        <property name="hibernate.hbm2ddl.auto">update</property>
+        <property name="hibernate.show_sql">false</property>
+
+        <!-- Mappage des entités -->
+        <mapping class="com.mycompany.model.MonEntite"/>
+    </session-factory>
+</hibernate-configuration>
