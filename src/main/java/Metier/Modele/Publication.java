@@ -35,6 +35,11 @@ public class Publication implements Serializable {
     private String title;
     private String description;
     
+    
+    @Column(nullable=false)
+    private Integer numberNotes;
+    private Float average;
+    
     @ManyToOne(optional = false)
     private Client client;
     
@@ -52,10 +57,15 @@ public class Publication implements Serializable {
     
     private Status status;
     
+    private Double distanceMax;
+    
     @PrePersist
     public void prePersist() {
         if (price == null) {
             price = 20;
+        }
+        if (numberNotes == null) {
+            numberNotes = 0;
         }
     }
 
@@ -70,6 +80,34 @@ public class Publication implements Serializable {
         this.title = title;
         this.description = description;
     }
+
+    public Double getDistanceMax() {
+        return distanceMax;
+    }
+
+    public void setDistanceMax(Double distanceMax) {
+        this.distanceMax = distanceMax;
+    }
+    
+    
+
+    public Integer getNumberNotes() {
+        return numberNotes;
+    }
+
+    public void setNumberNotes(Integer numberNotes) {
+        this.numberNotes = numberNotes;
+    }
+
+    public Float getAverage() {
+        return average;
+    }
+
+    public void setAverage(Float average) {
+        this.average = average;
+    }
+    
+    
 
     public Long getId() {
         return id;

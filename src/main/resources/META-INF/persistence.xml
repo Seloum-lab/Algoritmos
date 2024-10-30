@@ -6,6 +6,7 @@
     <class>Metier.Modele.Publication</class>
     <class>Metier.Modele.WorkType</class>
     <class>Metier.Modele.Appointment</class>
+    <class>Metier.Modele.Payment</class>
     <properties>
       <property name="javax.persistence.jdbc.url" value="jdbc:derby://localhost:1527/database"/>
       <property name="javax.persistence.jdbc.user" value="database"/>

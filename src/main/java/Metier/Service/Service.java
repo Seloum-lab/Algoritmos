@@ -371,6 +371,8 @@ public class Service {
     
     public static boolean takeAppointment(Long idClient, Long idPublication, LocalDate date, int duration, int start) {
         boolean result = true;
+        LatLng coordClient = null;
+        LatLng coordWorker = null;
         Client client = null;
         Client worker = null;
         Publication publication = null;
@@ -395,6 +397,16 @@ public class Service {
             publication = publicationDAO.findById(idPublication);
             worker = publication.getClient();            
             workerDispo = worker.getClientDisponibilities();
+            if (result) {
+                coordClient =  new LatLng(client.getLatitude(), client.getLongitude());
+                coordWorker = new LatLng(worker.getLatitude(), worker.getLongitude());
+                if (GeoNetApi.getFlightDistanceInKm(coordClient, coordWorker) > publication.getDistanceMax()) {
+                    result = false;
+                }
+            }
+            
+            
+            
             //If the index are goods
             if (result) {
                 //We verify that the worker said he's ok with these dates
@@ -715,5 +727,169 @@ public class Service {
         
         return result;
     }
+    
+    
+    public static boolean addNote(Long id, Integer note) {
+        Appointment appointment = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        Publication publication = null;
+        PublicationDAO publicationDAO = new PublicationDAO();
+        int numberNotes;
+        boolean result = true;
+        if (note < 0 || note >4) {
+            result = false;
+        }
+        
+        if (result) {
+            try {
+                JpaUtil.creerContextePersistance();
+                JpaUtil.ouvrirTransaction();
+                appointment = appointmentDAO.findById(id);
+                publication = appointment.getPublication();
+                numberNotes = publication.getNumberNotes();
+                publication.setAverage((publication.getAverage()*numberNotes+note)/(numberNotes+1));
+                appointment.setNote(note);
+                publication.setNumberNotes(numberNotes+1);
+                publicationDAO.update(publication);
+                appointmentDAO.update(appointment);
+                JpaUtil.validerTransaction();                
+            } catch (Exception ex) {
+                System.out.println(ex);
+                JpaUtil.annulerTransaction();
+                result = false;
+            } finally {
+                JpaUtil.fermerContextePersistance();
+            }
+        }
+        
+        return result;
+    }
+    
+    
+    public static Integer getNote(Long id) {
+        Integer result = null;
+        Appointment appointment = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            appointment = appointmentDAO.findById(id);
+            result = appointment.getNote();
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        
+        return result;
+    }
+    
+    
+    
+    public static Float getAverage(Long id) {
+        Float result = null;
+        Publication publication = null;
+        PublicationDAO publicationDAO = new PublicationDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            publication = publicationDAO.findById(id);
+            result = publication.getAverage();
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        return result;
+    }
+    
+    
+    public static Appointment getAppointmentById(Long id) {
+        Appointment appointment = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            appointment = appointmentDAO.findById(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return appointment;
+    }
+    
+    public static Payment getPaymentById(Long id) {
+        Payment payment = null;
+        PaymentDAO paymentDAO = new PaymentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            payment = paymentDAO.findById(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return payment;
+    }
+    
+    
+    public static Publication getPublicationById(Long id) {
+        Publication publication = null;
+        PublicationDAO publicationDAO = new PublicationDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            publication = publicationDAO.findById(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return publication;
+    }
+    
+    public static WorkType getWorkTypeById(String id) {
+        WorkType workType = null;
+        WorkTypeDAO workTypeDAO = new WorkTypeDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            workType = workTypeDAO.findById(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return workType;
+    }
+    
+    
+    public static boolean setDistanceMax(Long id, Double distanceMax) {
+        boolean result = false;
+        Publication publication = null;
+        PublicationDAO publicationDAO = new PublicationDAO();
+        
+        try{
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            publication = publicationDAO.findById(id);
+            publication.setDistanceMax(distanceMax);
+            publicationDAO.update(publication);
+            JpaUtil.validerTransaction();
+            result = true;                    
+        } catch (Exception ex) {
+            JpaUtil.annulerTransaction();
+            System.out.println(ex);
+            result = false;
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
+    
     
 }

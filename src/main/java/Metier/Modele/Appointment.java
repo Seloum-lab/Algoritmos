@@ -49,8 +49,20 @@ public class Appointment implements Serializable {
     @ManyToOne(optional = false)
     private Publication publication;
     
+    private Integer note;
+    
     private Status status;
 
+    public Integer getNote() {
+        return note;
+    }
+
+    public void setNote(Integer note) {
+        this.note = note;
+    }
+
+    
+    
     public Status getStatus() {
         return status;
     }
