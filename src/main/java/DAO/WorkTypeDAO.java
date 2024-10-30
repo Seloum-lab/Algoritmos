@@ -24,8 +24,8 @@ public class WorkTypeDAO {
         JpaUtil.obtenirContextePersistance().merge(workType);
     }
     
-    public WorkType findById(Long id) {
-        return JpaUtil.obtenirContextePersistance().find(WorkType.class, id);
+    public WorkType findById(String workType) {
+        return JpaUtil.obtenirContextePersistance().find(WorkType.class, workType);
     }
     
 }

@@ -4,43 +4,122 @@
  */
 package Metier.Modele;
 
+import java.io.Serializable;
 import java.util.Date;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
 
 /**
  *
  * @author DeLL
  */
 @Entity
-public class Publication {
+public class Publication implements Serializable {
+    public enum Status {
+        WAITING,
+        APPROVED,
+        REJECTED
+    }
+    
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)  
-    Integer pubication;
-    Client client;
+    private Long id;
+    
+    private String title;
+    private String description;
+    
+    @ManyToOne(optional = false)
+    private Client client;
     
    //TODO add the @ for the date
-    Date date;
-    WorkType workType;
+    @Column(nullable = false)
+    private Date date;
+    
+    @ManyToOne
+    @JoinColumn(nullable = false)
+    private WorkType workType;
+    
+    
+    @Column(nullable = false)
+    private Integer price;
+    
+    private Status status;
+    
+    @PrePersist
+    public void prePersist() {
+        if (price == null) {
+            price = 20;
+        }
+    }
 
     public Publication() {
     }
 
-    public Publication(Integer pubication, Client client, Date date, WorkType workType) {
-        this.pubication = pubication;
-        this.client = client;
+    public Publication(Date date, WorkType workType, int price, String title, String description) {
         this.date = date;
         this.workType = workType;
+        this.price = price;
+        this.status = Status.WAITING;
+        this.title = title;
+        this.description = description;
     }
 
-    public Integer getPubication() {
-        return pubication;
+    public Long getId() {
+        return id;
     }
 
-    public void setPubication(Integer pubication) {
-        this.pubication = pubication;
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    
+    public Integer getPrice() {
+        return price;
+    }
+
+    public void setPrice(Integer price) {
+        this.price = price;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    
+    
+    public Long getPubication() {
+        return id;
+    }
+
+    public void setPubication(Long id) {
+        this.id = id;
     }
 
     public Client getClient() {

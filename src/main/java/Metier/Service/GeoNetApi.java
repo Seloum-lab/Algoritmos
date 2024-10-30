@@ -26,15 +26,6 @@ import com.google.maps.model.TravelMode;
  */
 /*
 
-Exemple d'utilisation:
-
-    String adresseEtablissement = "COLLEGE JEAN JAURES, VILLEURBANNE";
-    LatLng coordsEtablissement = GeoNetApi.getLatLng(adresseEtablissement);
-    System.out.println("Lat/Lng de cet Établissement: " + "( " + coordsEtablissement.lat + "; " + coordsEtablissement.lng + " )");
-
-    String adresseINSA = "7 Avenue Jean Capelle Ouest, Villeurbanne";
-    LatLng coordsINSA = GeoNetApi.getLatLng(adresseINSA);
-    System.out.println("Lat/Lng de l'INSA: " + "( " + coordsINSA.lat + "; " + coordsINSA.lng + " )");
 
 */
     

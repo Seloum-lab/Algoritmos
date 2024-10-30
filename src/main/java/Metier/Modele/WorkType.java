@@ -16,9 +16,13 @@ import javax.persistence.Id;
 public class WorkType implements Serializable {
     
     @Id
-    String worktype;
+    private String worktype;
 
     public WorkType() {
+    }
+    
+    public WorkType(String worktype) {
+        this.worktype = worktype;
     }
 
     public String getWorktype() {

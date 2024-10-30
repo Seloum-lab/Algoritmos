@@ -5,11 +5,15 @@
 package Metier.Modele;
 
 import java.io.Serializable;
-import javax.persistence.Column;
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Set;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 /**
  *
@@ -17,19 +21,50 @@ import javax.persistence.Id;
  */
 @Entity
 public class Client implements Serializable {
+    public enum Status {
+        FREE,
+        TAKEN,
+        NOT_FREE
+    }
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    private Long id;
+    
+    @OneToMany(cascade = CascadeType.ALL)
+    private Set<Publication> publications;
+    
+    private String firstName;
+    private String lastName;
+    private String mail;
+    private String phoneNumber;
+    private String password;
+    private Double latitude;
+    private Double longitude;
+    private String address;
+    private boolean[][] clienDisponibilities;
+    private HashMap<LocalDate, Status[][]>actualDisponibilities;
     
     
-    String firstName;
-    String lastName;
-    String mail;
-    String phoneNumber;
-    String password;
-    Double latitude;
-    Double longitude;
-    String address;
+    public void addDisponibility(LocalDate date, Status[][] disponibiliy) {
+        this.actualDisponibilities.put(date, disponibiliy);
+    }
+    
+    public void addDisponibility(LocalDate date) {
+        Status disponibility[][] = new Status[7][14];
+        for (int day = 0; day<7; day++) {
+            for (int hour = 0; hour<12; hour++) {
+                if (this.clienDisponibilities[day][hour])
+                    disponibility[day][hour] = Status.FREE;
+                else disponibility[day][hour] = Status.NOT_FREE;
+            }
+        }
+        this.actualDisponibilities.put(date, disponibility);
+    }
+    
+    public void addPublication(Publication publication) {
+        this.publications.add(publication);
+    }
 
     public Client(String firstName, String lastName, String mail, String phoneNumber, String password, String address) {
         this.firstName = firstName;
@@ -38,6 +73,32 @@ public class Client implements Serializable {
         this.phoneNumber = phoneNumber;
         this.password = password;
         this.address = address;
+        this.clienDisponibilities = new boolean[7][12];
+        this.actualDisponibilities = new HashMap<>();
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public boolean[][] getClientDisponibilities() {
+        return clienDisponibilities;
+    }
+
+    public void setClientDisponibilities(boolean[][] clienDisponibilities) {
+        this.clienDisponibilities = clienDisponibilities;
+    }
+
+    public HashMap<LocalDate, Status[][]> getActualDisponibilities() {
+        return actualDisponibilities;
+    }
+
+    public void setActualDisponibilities(HashMap<LocalDate, Status[][]> actualDisponibilities) {
+        this.actualDisponibilities = actualDisponibilities;
     }
     
     
@@ -54,11 +115,11 @@ public class Client implements Serializable {
     }
 
     
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
