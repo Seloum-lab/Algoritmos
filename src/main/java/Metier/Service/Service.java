@@ -19,9 +19,11 @@ import com.google.maps.model.LatLng;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 //TODO : Change signup with API functionning 
+//TODO : Change takeAppointment with API functionning
 
 
 /**
@@ -29,15 +31,26 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
  * @author DeLL
  */
 public class Service {
-    public Client authenticate(String mail, String password) {
-        JpaUtil.creerContextePersistance();
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    public static Client authenticate(String mail, String password) {
+        Client client = null;
         ClientDAO clientDao = new ClientDAO();
-        Client client = clientDao.findByMail(mail);
-        JpaUtil.fermerContextePersistance();
-        if (!passwordEncoder.encode(password).matches(client.getPassword())) {
+        try {
+            JpaUtil.creerContextePersistance();
+            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            
+            client = clientDao.findByMail(mail);
+            if (!passwordEncoder.matches(password, client.getPassword())) {
+                client = null;
+                System.out.println("Petit test ici");
+            }
+        } catch (Exception ex) {
+            System.out.println(ex);
             client = null;
+        } finally {
+            JpaUtil.fermerContextePersistance();
         }
+        
+        
         return client;
     }
     
@@ -339,7 +352,7 @@ public class Service {
     }
     
     
-    public static boolean publish(Long id, Date date, String workTypeString, int price, String title, String descrption) {
+    public static boolean publish(Long id, Date date, String workTypeString, int price, String title, String descrption, Double distanceMax) {
         boolean result = false;
         WorkType workType = null;
         WorkTypeDAO workTypeDAO = new WorkTypeDAO();
@@ -351,7 +364,7 @@ public class Service {
             JpaUtil.creerContextePersistance();
             JpaUtil.ouvrirTransaction();
             workType = workTypeDAO.findById(workTypeString);
-            publication = new Publication(date, workType, price, title, descrption);
+            publication = new Publication(date, workType, price, title, descrption, distanceMax);
             client = clientDAO.findById(id);
             publication.setClient(client);
             client.addPublication(publication);
@@ -397,13 +410,13 @@ public class Service {
             publication = publicationDAO.findById(idPublication);
             worker = publication.getClient();            
             workerDispo = worker.getClientDisponibilities();
-            if (result) {
+            /*if (result) {
                 coordClient =  new LatLng(client.getLatitude(), client.getLongitude());
                 coordWorker = new LatLng(worker.getLatitude(), worker.getLongitude());
                 if (GeoNetApi.getFlightDistanceInKm(coordClient, coordWorker) > publication.getDistanceMax()) {
                     result = false;
                 }
-            }
+            } */
             
             
             
@@ -852,6 +865,23 @@ public class Service {
         return publication;
     }
     
+    public static List<WorkType> getWorkTypeList() {
+        List<WorkType> result = null;
+        WorkTypeDAO workTypeDAO = new WorkTypeDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = workTypeDAO.getList();
+        } catch (Exception ex){
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        
+        return result;
+    }
+    
     public static WorkType getWorkTypeById(String id) {
         WorkType workType = null;
         WorkTypeDAO workTypeDAO = new WorkTypeDAO();
@@ -888,6 +918,22 @@ public class Service {
         } finally {
             JpaUtil.fermerContextePersistance();
         }
+        return result;
+    }
+    
+    public static List<Publication> getListPublicationDistance(double distance) {
+        List<Publication> result = null;
+        PublicationDAO publicationDAO = new PublicationDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = publicationDAO.getList(distance);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
         return result;
     }
     

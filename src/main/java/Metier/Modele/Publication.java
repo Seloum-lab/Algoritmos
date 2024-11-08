@@ -8,6 +8,8 @@ import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -55,6 +57,7 @@ public class Publication implements Serializable {
     @Column(nullable = false)
     private Integer price;
     
+    @Enumerated(EnumType.STRING)
     private Status status;
     
     private Double distanceMax;
@@ -72,13 +75,14 @@ public class Publication implements Serializable {
     public Publication() {
     }
 
-    public Publication(Date date, WorkType workType, int price, String title, String description) {
+    public Publication(Date date, WorkType workType, int price, String title, String description, Double distanceMax) {
         this.date = date;
         this.workType = workType;
         this.price = price;
         this.status = Status.WAITING;
         this.title = title;
         this.description = description;
+        this.distanceMax = distanceMax;
     }
 
     public Double getDistanceMax() {

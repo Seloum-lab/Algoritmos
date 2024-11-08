@@ -5,6 +5,8 @@
 package DAO;
 
 import Metier.Modele.Publication;
+import java.util.List;
+import javax.persistence.TypedQuery;
 
 /**
  *
@@ -25,6 +27,18 @@ public class PublicationDAO {
     
     public Publication findById(Long id) {
         return JpaUtil.obtenirContextePersistance().find(Publication.class, id);
+    }
+    
+    
+    public List<Publication> getList(double distance) {
+        List<Publication> result = null;
+        String query = "SELECT p FROM Publication p WHERE p.status = 'APPROVED' order by p.date";
+        TypedQuery tpQuery = JpaUtil.obtenirContextePersistance().createQuery(query, Publication.class);
+        
+        result = (List<Publication>) tpQuery.getResultList();
+        
+        
+        return result;
     }
     
 }

@@ -17,6 +17,7 @@ DAO\JpaUtil.class
 Metier\Modele\Payment_.class
 DAO\AppointmentDAO.class
 Metier\Modele\Publication_.class
+Metier\Modele\Client$Status.class
 Metier\Modele\Client.class
 DAO\PublicationDAO.class
 DAO\JpaUtil$1.class

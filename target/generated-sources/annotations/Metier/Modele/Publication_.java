@@ -8,11 +8,14 @@ import javax.annotation.processing.Generated;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.StaticMetamodel;
 
-@Generated(value="org.eclipse.persistence.internal.jpa.modelgen.CanonicalModelProcessor", date="2024-10-30T06:01:48", comments="EclipseLink-2.7.12.v20230209-rNA")
+@Generated(value="org.eclipse.persistence.internal.jpa.modelgen.CanonicalModelProcessor", date="2024-11-08T01:51:50", comments="EclipseLink-2.7.12.v20230209-rNA")
 @StaticMetamodel(Publication.class)
 public class Publication_ { 
 
     public static volatile SingularAttribute<Publication, Date> date;
+    public static volatile SingularAttribute<Publication, Double> distanceMax;
+    public static volatile SingularAttribute<Publication, Integer> numberNotes;
+    public static volatile SingularAttribute<Publication, Float> average;
     public static volatile SingularAttribute<Publication, Integer> price;
     public static volatile SingularAttribute<Publication, WorkType> workType;
     public static volatile SingularAttribute<Publication, String> description;

@@ -8,12 +8,13 @@ import javax.annotation.processing.Generated;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.StaticMetamodel;
 
-@Generated(value="org.eclipse.persistence.internal.jpa.modelgen.CanonicalModelProcessor", date="2024-10-30T06:01:48", comments="EclipseLink-2.7.12.v20230209-rNA")
+@Generated(value="org.eclipse.persistence.internal.jpa.modelgen.CanonicalModelProcessor", date="2024-11-08T01:51:50", comments="EclipseLink-2.7.12.v20230209-rNA")
 @StaticMetamodel(Appointment.class)
 public class Appointment_ { 
 
     public static volatile SingularAttribute<Appointment, Integer> duration;
     public static volatile SingularAttribute<Appointment, LocalDate> date;
+    public static volatile SingularAttribute<Appointment, Integer> note;
     public static volatile SingularAttribute<Appointment, Publication> publication;
     public static volatile SingularAttribute<Appointment, Boolean> paid;
     public static volatile SingularAttribute<Appointment, Integer> start;

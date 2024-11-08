@@ -5,6 +5,8 @@
 package DAO;
 
 import Metier.Modele.WorkType;
+import java.util.List;
+import javax.persistence.TypedQuery;
 
 /**
  *
@@ -26,6 +28,16 @@ public class WorkTypeDAO {
     
     public WorkType findById(String workType) {
         return JpaUtil.obtenirContextePersistance().find(WorkType.class, workType);
+    }
+    
+    public List<WorkType> getList() {
+        List<WorkType> result = null;
+        String query = "SELECT w FROM WorkType w order by w.worktype";
+        TypedQuery tpQuery = JpaUtil.obtenirContextePersistance().createQuery(query, WorkType.class);
+        
+        result = (List<WorkType>) tpQuery.getResultList();
+        
+        return result;
     }
     
 }

@@ -9,6 +9,8 @@ import java.time.Duration;
 import java.time.LocalDate;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -51,6 +53,7 @@ public class Appointment implements Serializable {
     
     private Integer note;
     
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     public Integer getNote() {

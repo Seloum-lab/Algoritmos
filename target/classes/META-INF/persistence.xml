@@ -6,12 +6,13 @@
     <class>Metier.Modele.Publication</class>
     <class>Metier.Modele.WorkType</class>
     <class>Metier.Modele.Appointment</class>
+    <class>Metier.Modele.Payment</class>
     <properties>
       <property name="javax.persistence.jdbc.url" value="jdbc:derby://localhost:1527/database"/>
       <property name="javax.persistence.jdbc.user" value="database"/>
       <property name="javax.persistence.jdbc.driver" value="org.apache.derby.client.ClientAutoloadedDriver"/>
       <property name="javax.persistence.jdbc.password" value="database"/>
-      <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
+      <property name="javax.persistence.schema-generation.database.action" value="create"/>
     </properties>
   </persistence-unit>
 </persistence>

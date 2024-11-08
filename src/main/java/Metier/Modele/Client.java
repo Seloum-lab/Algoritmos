@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Set;
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -36,6 +37,7 @@ public class Client implements Serializable {
     
     private String firstName;
     private String lastName;
+    @Column(unique = true)
     private String mail;
     private String phoneNumber;
     private String password;

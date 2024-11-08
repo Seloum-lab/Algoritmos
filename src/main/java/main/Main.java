@@ -23,10 +23,12 @@ public class Main {
         JpaUtil.creerFabriquePersistance();
 
         
-        Service.signUp("selim", "ben", "mail", "pass", "07809", "France");
-        Service.signUp("Adrian", "bbb", "mail.com", "pass", "171717", "address");
+
         Service.addWorkType("travail");
-        Service.publish((long)1,new Date(), "travail", 20, "title", "descrpition");
+        Service.addWorkType("Peinture");
+        Service.addWorkType("Electicien");
+        Service.addWorkType("Menuisier");
+        Service.publish((long)1,new Date(), "travail", 20, "title", "descrpition", 45.2);
         
         Service.setTrueClientDisponibility(3, 5, (long) 1);
         Service.setTrueClientDisponibility(3, 6, (long) 1);
