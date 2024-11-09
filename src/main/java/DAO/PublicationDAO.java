@@ -30,10 +30,23 @@ public class PublicationDAO {
     }
     
     
-    public List<Publication> getList(double distance) {
+    public List<Publication> getListApproved(double distance) {
         List<Publication> result = null;
-        String query = "SELECT p FROM Publication p WHERE p.status = 'APPROVED' order by p.date";
+        String query = "SELECT p FROM Publication p WHERE p.status = :status order by p.date";
         TypedQuery tpQuery = JpaUtil.obtenirContextePersistance().createQuery(query, Publication.class);
+        tpQuery.setParameter("status", Publication.Status.APPROVED);
+        
+        result = (List<Publication>) tpQuery.getResultList();
+        
+        
+        return result;
+    }
+    
+    public List<Publication> getListWaiting() {
+        List<Publication> result = null;
+        String query = "SELECT p FROM Publication p WHERE p.status = :status order by p.date";
+        TypedQuery tpQuery = JpaUtil.obtenirContextePersistance().createQuery(query, Publication.class);
+        tpQuery.setParameter("status", Publication.Status.WAITING);
         
         result = (List<Publication>) tpQuery.getResultList();
         

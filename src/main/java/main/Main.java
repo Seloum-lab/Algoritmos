@@ -22,7 +22,7 @@ public class Main {
     public static void main(String[] args) {
         JpaUtil.creerFabriquePersistance();
 
-        
+        Service.signUp("firstname", "last", "mail.com@example", "password", "0774548", "address");
 
         Service.addWorkType("travail");
         Service.addWorkType("Peinture");
@@ -40,8 +40,18 @@ public class Main {
         
         Service.takeAppointment((long)2, (long)1, LocalDate.of(2024, Month.NOVEMBER, 14), 5, 5);
         Client client = Service.getClientById((long) 1);
+        boolean[][] disponibility = new boolean[7][12];
+        Service.setClientDisponibility(disponibility, (long)1);
         
+        Service.setActualDisponibility((long) 1, LocalDate.now());
         
+        Client.Status[][] actualDisponibility = Service.getClientById((long) 1).getActualDisponibilities(LocalDate.now());
+        
+        for (Client.Status[] table : actualDisponibility) {
+            for (Client.Status element : table) {
+                System.out.println(element);
+            }
+        }
         
         JpaUtil.fermerFabriquePersistance();
     }

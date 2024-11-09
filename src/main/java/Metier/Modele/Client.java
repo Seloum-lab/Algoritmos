@@ -4,17 +4,27 @@
  */
 package Metier.Modele;
 
+import Converters.PairConverter;
+import Utils.Pair;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.HashMap;
+import java.time.temporal.IsoFields;
+import java.util.Map;
 import java.util.Set;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.MapKeyColumn;
 import javax.persistence.OneToMany;
+import org.eclipse.persistence.annotations.MapKeyConvert;
+import java.util.HashMap;
+import org.eclipse.persistence.annotations.Converter;
 
 /**
  *
@@ -45,15 +55,24 @@ public class Client implements Serializable {
     private Double longitude;
     private String address;
     private boolean[][] clienDisponibilities;
-    private HashMap<LocalDate, Status[][]>actualDisponibilities;
+    
+    @ElementCollection
+    @CollectionTable(name = "actual_disponibilities", joinColumns = @JoinColumn(name = "client_id"))
+    @MapKeyColumn(name = "date")
+    @Column(name = "disponibility", length=10*7*12)
+    @Converter(name="PairConverter", converterClass = PairConverter.class)
+    @MapKeyConvert("PairConverter")
+    private Map<Pair<Integer, Integer>, Status[][]>actualDisponibilities;
     
     
-    public void addDisponibility(LocalDate date, Status[][] disponibiliy) {
-        this.actualDisponibilities.put(date, disponibiliy);
+    public void addDisponibility(LocalDate date, Status[][] disponibility) {
+        int year = date.getYear();
+        int weekOfYear = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        this.actualDisponibilities.put(new Pair(year, weekOfYear), disponibility);
     }
     
     public void addDisponibility(LocalDate date) {
-        Status disponibility[][] = new Status[7][14];
+        Status disponibility[][] = new Status[7][12];
         for (int day = 0; day<7; day++) {
             for (int hour = 0; hour<12; hour++) {
                 if (this.clienDisponibilities[day][hour])
@@ -61,7 +80,9 @@ public class Client implements Serializable {
                 else disponibility[day][hour] = Status.NOT_FREE;
             }
         }
-        this.actualDisponibilities.put(date, disponibility);
+        int year = date.getYear();
+        int weekOfYear = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        this.actualDisponibilities.put(new Pair(year, weekOfYear), disponibility);
     }
     
     public void addPublication(Publication publication) {
@@ -95,11 +116,17 @@ public class Client implements Serializable {
         this.clienDisponibilities = clienDisponibilities;
     }
 
-    public HashMap<LocalDate, Status[][]> getActualDisponibilities() {
+    public Status[][] getActualDisponibilities(LocalDate date) {
+        int year = date.getYear();
+        int weekOfYear = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        return this.actualDisponibilities.get(new Pair(year, weekOfYear));
+    }
+    
+    public Map<Pair<Integer, Integer>, Status[][]> getActualDisponibilities() {
         return actualDisponibilities;
     }
 
-    public void setActualDisponibilities(HashMap<LocalDate, Status[][]> actualDisponibilities) {
+    public void setActualDisponibilities(Map<Pair<Integer, Integer>, Status[][]> actualDisponibilities) {
         this.actualDisponibilities = actualDisponibilities;
     }
     

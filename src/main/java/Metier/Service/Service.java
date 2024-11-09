@@ -15,10 +15,12 @@ import Metier.Modele.Client;
 import Metier.Modele.Payment;
 import Metier.Modele.Publication;
 import Metier.Modele.WorkType;
+import Utils.Pair;
 import com.google.maps.model.LatLng;
 import java.time.LocalDate;
+import java.time.temporal.IsoFields;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -111,7 +113,9 @@ public class Service {
     
     public static boolean setFreeActualDisponibility (int day, int hour, Long id, LocalDate date) {
         boolean result = true;
-        HashMap<LocalDate ,Client.Status [][]> disponibility;
+        Map<Pair<Integer, Integer> ,Client.Status [][]> disponibility;
+        int year = date.getYear();
+        int weekOfYear = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
         Client.Status[][] table;
         ClientDAO clientDAO = new ClientDAO();
         Client client = null;
@@ -125,7 +129,7 @@ public class Service {
                 JpaUtil.ouvrirTransaction();
                 client = clientDAO.findById(id);
                 disponibility = client.getActualDisponibilities();
-                table = disponibility.get(date);
+                table = disponibility.get(new Pair(year, weekOfYear));
                 table[day][hour] = Client.Status.FREE;
                 client.addDisponibility(date, table);
                 clientDAO.update(client);
@@ -148,7 +152,9 @@ public class Service {
         boolean result = true;
         ClientDAO clientDAO = new ClientDAO();
         Client client = null;
-        HashMap<LocalDate , Client.Status[][]> disponibility;
+        Map<Pair<Integer, Integer> , Client.Status[][]> disponibility;
+        int year = date.getYear();
+        int weekOfYear = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
         Client.Status[][] table;
         if (day<0 || day > 6 || hour < 0 || hour > 11) {
             result = false;
@@ -160,7 +166,7 @@ public class Service {
                 JpaUtil.ouvrirTransaction();
                 client = clientDAO.findById(id);
                 disponibility = client.getActualDisponibilities();
-                table = disponibility.get(date);
+                table = disponibility.get(new Pair(year, weekOfYear));
                 table[day][hour] = Client.Status.NOT_FREE;
                 client.addDisponibility(date, table);
                 clientDAO.update(client);
@@ -185,7 +191,9 @@ public class Service {
         boolean result = true;
         ClientDAO clientDAO = new ClientDAO();
         Client client = null;
-        HashMap<LocalDate , Client.Status[][]> disponibility;
+        Map<Pair<Integer, Integer> , Client.Status[][]> disponibility;
+        int year = date.getYear();
+        int weekOfYear = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
         Client.Status[][] table;
         if (day<0 || day > 6 || hour < 0 || hour > 11) {
             result = false;
@@ -197,7 +205,7 @@ public class Service {
                 JpaUtil.ouvrirTransaction();
                 client = clientDAO.findById(id);
                 disponibility = client.getActualDisponibilities();
-                table = disponibility.get(date);
+                table = disponibility.get(new Pair(year, weekOfYear));
                 table[day][hour] = Client.Status.TAKEN;
                 client.addDisponibility(date, table);
                 clientDAO.update(client);
@@ -280,6 +288,30 @@ public class Service {
             }
         }
         
+        return result;
+    }
+    
+    
+    public static boolean setActualDisponibility(Long id, LocalDate date) {
+        boolean result = true;
+        Client client = null;
+        ClientDAO clientDAO = new ClientDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            client = clientDAO.findById(id);
+            client.addDisponibility(date);
+            clientDAO.update(client);
+            JpaUtil.validerTransaction();
+            result = true;
+        } catch (Exception ex) {
+            System.out.println(ex);
+            JpaUtil.annulerTransaction();
+            result = false;
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
         return result;
     }
     
@@ -927,7 +959,23 @@ public class Service {
         
         try {
             JpaUtil.creerContextePersistance();
-            result = publicationDAO.getList(distance);
+            result = publicationDAO.getListApproved(distance);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        return result;
+    }
+    
+    public static List<Publication> getListPublicationWaiting() {
+        List<Publication> result = null;
+        PublicationDAO publicationDAO = new PublicationDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = publicationDAO.getListWaiting();
         } catch (Exception ex) {
             System.out.println(ex);
         } finally {

@@ -16,6 +16,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 /**
  *
@@ -40,12 +42,14 @@ public class Publication implements Serializable {
     
     @Column(nullable=false)
     private Integer numberNotes;
+    
+    @Column(nullable=false)
     private Float average;
     
     @ManyToOne(optional = false)
     private Client client;
     
-   //TODO add the @ for the date
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false)
     private Date date;
     
@@ -69,6 +73,9 @@ public class Publication implements Serializable {
         }
         if (numberNotes == null) {
             numberNotes = 0;
+        }
+        if (average == null) {
+            average = (float) -1;
         }
     }
 
