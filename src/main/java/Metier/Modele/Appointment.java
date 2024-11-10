@@ -5,9 +5,11 @@
 package Metier.Modele;
 
 import java.io.Serializable;
-import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.Set;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -33,8 +35,9 @@ public class Appointment implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)  
     private Long id;
     
+    @ElementCollection
     @Column(nullable = false)
-    private Integer duration;
+    private Map<Integer, Set<Integer>> duration;
     
     @Column(nullable = false)
     private LocalDate date;
@@ -79,9 +82,6 @@ public class Appointment implements Serializable {
     
     @PrePersist
     public void prePersist() {
-        if (duration == null) {
-            duration = 2;
-        }
         if (paid == null) {
             paid = false;
         }
@@ -89,12 +89,11 @@ public class Appointment implements Serializable {
     
     public Appointment() {}
 
-    public Appointment(Integer duration, LocalDate date, Integer start, Client client, Publication publication) {
-        this.duration = duration;
+    public Appointment(LocalDate date, Client client, Publication publication, Map<Integer,Set<Integer>> duration) {
         this.date = date;
-        this.start = start;
         this.client = client;
         this.publication = publication;
+        this.duration = duration;
     }
 
     public Boolean getPaid() {
@@ -115,13 +114,6 @@ public class Appointment implements Serializable {
         this.id = id;
     }
 
-    public Integer getDuration() {
-        return duration;
-    }
-
-    public void setDuration(Integer duration) {
-        this.duration = duration;
-    }
 
     public LocalDate getDate() {
         return date;

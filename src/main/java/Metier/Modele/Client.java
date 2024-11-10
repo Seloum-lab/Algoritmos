@@ -4,7 +4,9 @@
  */
 package Metier.Modele;
 
+import Converters.BooleanDoubleTableConverter;
 import Converters.PairConverter;
+import Converters.StatusDoubleTableConverter;
 import Utils.Pair;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -14,6 +16,7 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -23,8 +26,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.OneToMany;
 import org.eclipse.persistence.annotations.MapKeyConvert;
-import java.util.HashMap;
 import org.eclipse.persistence.annotations.Converter;
+import org.eclipse.persistence.indirection.IndirectMap;
 
 /**
  *
@@ -54,12 +57,13 @@ public class Client implements Serializable {
     private Double latitude;
     private Double longitude;
     private String address;
+    
     private boolean[][] clienDisponibilities;
     
     @ElementCollection
     @CollectionTable(name = "actual_disponibilities", joinColumns = @JoinColumn(name = "client_id"))
     @MapKeyColumn(name = "date")
-    @Column(name = "disponibility", length=10*7*12)
+    @Column(name = "disponibility", length=10000)
     @Converter(name="PairConverter", converterClass = PairConverter.class)
     @MapKeyConvert("PairConverter")
     private Map<Pair<Integer, Integer>, Status[][]>actualDisponibilities;
@@ -97,7 +101,7 @@ public class Client implements Serializable {
         this.password = password;
         this.address = address;
         this.clienDisponibilities = new boolean[7][12];
-        this.actualDisponibilities = new HashMap<>();
+        this.actualDisponibilities = new IndirectMap<>();
     }
 
     public String getAddress() {
@@ -119,6 +123,9 @@ public class Client implements Serializable {
     public Status[][] getActualDisponibilities(LocalDate date) {
         int year = date.getYear();
         int weekOfYear = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        if (this.actualDisponibilities.get(new Pair(year, weekOfYear)) == null) {
+            addDisponibility(date);
+        }
         return this.actualDisponibilities.get(new Pair(year, weekOfYear));
     }
     

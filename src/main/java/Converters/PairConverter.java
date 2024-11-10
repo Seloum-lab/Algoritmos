@@ -27,7 +27,7 @@ public class PairConverter implements Converter {
         if (pair == null) {
             return null;
         }
-        return pair.getFirst() + SEPARATOR + pair.getSecond(); 
+        return Integer.toString(pair.getFirst()) + SEPARATOR + Integer.toString(pair.getSecond()); 
     }
 
     @Override

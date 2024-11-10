@@ -25,4 +25,5 @@ Metier\Modele\Client.class
 Converters\PairConverter.class
 DAO\PublicationDAO.class
 DAO\JpaUtil$1.class
+Converters\BooleanDoubleTableConverter.class
 Metier\Modele\WorkType_.class

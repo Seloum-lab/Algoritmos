@@ -38,8 +38,6 @@ public class Main {
         Service.setTrueClientDisponibility(3, 10, (long) 1);
         
         
-        Service.takeAppointment((long)2, (long)1, LocalDate.of(2024, Month.NOVEMBER, 14), 5, 5);
-        Client client = Service.getClientById((long) 1);
         boolean[][] disponibility = new boolean[7][12];
         Service.setClientDisponibility(disponibility, (long)1);
         

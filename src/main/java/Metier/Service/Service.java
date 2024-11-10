@@ -22,6 +22,7 @@ import java.time.temporal.IsoFields;
 import java.util.Date;
 import java.util.Map;
 import java.util.List;
+import java.util.Set;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 //TODO : Change signup with API functionning 
@@ -42,8 +43,10 @@ public class Service {
             
             client = clientDao.findByMail(mail);
             if (!passwordEncoder.matches(password, client.getPassword())) {
+                System.out.println(client.getPassword());
                 client = null;
                 System.out.println("Petit test ici");
+                System.out.println(password);
             }
         } catch (Exception ex) {
             System.out.println(ex);
@@ -414,101 +417,61 @@ public class Service {
     }
     
     
-    public static boolean takeAppointment(Long idClient, Long idPublication, LocalDate date, int duration, int start) {
-        boolean result = true;
-        LatLng coordClient = null;
-        LatLng coordWorker = null;
+    public static boolean takeAppointment(Long idClient, Long idPublication, LocalDate date, Map<Integer, Set<Integer>> map) {
+        boolean result = false;
         Client client = null;
         Client worker = null;
         Publication publication = null;
         Appointment appointment = null;
-        AppointmentDAO appointmentDAO = new AppointmentDAO();
         ClientDAO clientDAO = new ClientDAO();
         PublicationDAO publicationDAO = new PublicationDAO();
-        int day = date.getDayOfWeek().getValue() - 1;
-        boolean[][] workerDispo;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
         Client.Status[][] workerActualDispo = null;
-        
-        if (start<0 || duration <0 || start+duration>11) {
-            result = false;
-        }
-
-        
+        boolean[][] workerDispo = null;
         
         try {
             JpaUtil.creerContextePersistance();
             JpaUtil.ouvrirTransaction();
             client = clientDAO.findById(idClient);
             publication = publicationDAO.findById(idPublication);
-            worker = publication.getClient();            
+            worker = publication.getClient();
+            workerActualDispo = worker.getActualDisponibilities(date);
             workerDispo = worker.getClientDisponibilities();
-            /*if (result) {
-                coordClient =  new LatLng(client.getLatitude(), client.getLongitude());
-                coordWorker = new LatLng(worker.getLatitude(), worker.getLongitude());
-                if (GeoNetApi.getFlightDistanceInKm(coordClient, coordWorker) > publication.getDistanceMax()) {
-                    result = false;
-                }
-            } */
             
-            
-            
-            //If the index are goods
-            if (result) {
-                //We verify that the worker said he's ok with these dates
-                for (int i = 0; i<duration; i++) {
-                    System.out.println(workerDispo[day][start+1]);
-                    if (workerDispo[day][start+1] == false) {
+            for (Map.Entry<Integer, Set<Integer>> entry : map.entrySet()) {
+                Integer day = entry.getKey();
+                Set<Integer> hourSet = entry.getValue();
+                for (Integer hour : hourSet) {
+                    if (!(workerDispo[day][hour] && (workerActualDispo[day][hour] == Client.Status.FREE))) {
                         result = false;
                         break;
+                    } else {
+                        workerActualDispo[day][hour] = Client.Status.TAKEN;
                     }
+                }
+                if (!result) {
+                    break;
                 }
             }
             
-            
-            //If the index are good and the worker noramlly have the good disonibilities
             if (result) {
-                workerActualDispo = worker.getActualDisponibilities().get(date);
-                //If the hashma does not contains the correct date, we add it by default
-                if (workerActualDispo == null) {
-                    worker.addDisponibility(date);
-                    workerActualDispo = worker.getActualDisponibilities().get(date);
-                    
-                } else { //If it contains it, we verify the worker does not have an appointment at this hour
-                    for (int i = 0; i<duration; i++) {
-                        if (workerActualDispo[day][start+1] == Client.Status.TAKEN) {
-                            result = false;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            //If the appointment can be taken
-            if (result) {
-                //We update the worker disponibilities
-                for (int i = 0; i<duration; i++) {
-                    workerActualDispo[day][start+i] = Client.Status.TAKEN;
-                }
                 worker.addDisponibility(date, workerActualDispo);
-                
-                appointment = new Appointment(duration, date, start, client, publication);
+                appointment = new Appointment(date, client, publication, map);
                 appointmentDAO.create(appointment);
                 clientDAO.update(worker);
             }
-            
-            JpaUtil.validerTransaction();            
+            JpaUtil.validerTransaction();
+            result = true;
         } catch (Exception ex) {
-            JpaUtil.annulerTransaction();
             result = false;
             System.out.println(ex);
+            JpaUtil.annulerTransaction();
         } finally {
             JpaUtil.fermerContextePersistance();
-        }
-        
-        
+        } 
         return result;
     }
-    
+     
     
     public static boolean addWorkType(String workTypeString) {
         boolean result = false;
@@ -682,7 +645,7 @@ public class Service {
         return result;
     }
     
-    
+   /*  
     public static boolean cancelAppointment(Long id) {
         boolean result = false;
         Client worker = null;
@@ -741,7 +704,7 @@ public class Service {
         }
         
         return result;
-    }
+    } */
     
     
     public static boolean validateAppointment(Long id) {

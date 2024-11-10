@@ -4,7 +4,6 @@
  */
 package Converters;
 
-import Metier.Modele.Client;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
@@ -13,19 +12,19 @@ import javax.persistence.Converter;
  * @author DeLL
  */
 @Converter(autoApply = true)
-public class StatusDoubleTableConverter implements AttributeConverter<Metier.Modele.Client.Status[][], String> {
+public class BooleanDoubleTableConverter implements AttributeConverter<boolean[][], String>{
     private static final String TABLESEPARATOR = "; ";
     private static final String SEPARATOR = ", ";
-    
+
     @Override
-    public String convertToDatabaseColumn(Client.Status[][] doubleTable) {
+    public String convertToDatabaseColumn(boolean[][] doubleTable) {
         StringBuilder result = new StringBuilder();
         assert(doubleTable.length == 7);
 
-        for (Metier.Modele.Client.Status[] table : doubleTable) {
+        for (boolean[] table : doubleTable) {
             assert(table.length == 12);
-            for (Metier.Modele.Client.Status status : table) {
-                result.append(status.name()).append(SEPARATOR);
+            for (boolean dispo : table) {
+                result.append(dispo ? "t" : "f").append(SEPARATOR);
             }
             result.setLength(result.length() - SEPARATOR.length());
             result.append(TABLESEPARATOR);
@@ -37,8 +36,8 @@ public class StatusDoubleTableConverter implements AttributeConverter<Metier.Mod
     }
 
     @Override
-    public Client.Status[][] convertToEntityAttribute(String dbDoubleTable) {
-        Client.Status[][] result = new Client.Status[7][12];
+    public boolean[][] convertToEntityAttribute(String dbDoubleTable) {
+        boolean[][] result = new boolean[7][12];
         if (dbDoubleTable == null || dbDoubleTable.isEmpty())
             return null;
         
@@ -49,15 +48,11 @@ public class StatusDoubleTableConverter implements AttributeConverter<Metier.Mod
             String[] table = doubleTable[i].split(SEPARATOR);
             assert(table.length == 12);
             for (int j = 0; j<12; j++) {
-                result[i][j] = Client.Status.valueOf(table[j]);
+                result[i][j] = ("t".equals(table[j]));
             }
         }
         
-        
-        
         return result;
     }
-
-   
     
 }
