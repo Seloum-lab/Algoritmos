@@ -4,12 +4,14 @@
  */
 package Metier.Service;
 
+import DAO.AdminDAO;
 import DAO.AppointmentDAO;
 import DAO.ClientDAO;
 import DAO.JpaUtil;
 import DAO.PaymentDAO;
 import DAO.PublicationDAO;
 import DAO.WorkTypeDAO;
+import Metier.Modele.Admin;
 import Metier.Modele.Appointment;
 import Metier.Modele.Client;
 import Metier.Modele.Payment;
@@ -17,11 +19,15 @@ import Metier.Modele.Publication;
 import Metier.Modele.WorkType;
 import Utils.Pair;
 import com.google.maps.model.LatLng;
+import com.sun.net.httpserver.Authenticator;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.IsoFields;
+import java.time.temporal.WeekFields;
 import java.util.Date;
 import java.util.Map;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -37,16 +43,12 @@ public class Service {
     public static Client authenticate(String mail, String password) {
         Client client = null;
         ClientDAO clientDao = new ClientDAO();
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         try {
-            JpaUtil.creerContextePersistance();
-            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-            
+            JpaUtil.creerContextePersistance();            
             client = clientDao.findByMail(mail);
-            if (!passwordEncoder.matches(password, client.getPassword())) {
-                System.out.println(client.getPassword());
+            if (client == null || !passwordEncoder.matches(password, client.getPassword())) {
                 client = null;
-                System.out.println("Petit test ici");
-                System.out.println(password);
             }
         } catch (Exception ex) {
             System.out.println(ex);
@@ -227,11 +229,36 @@ public class Service {
     }
     
     
+    public static boolean InitializeClientDisponibility(Long id) {
+        boolean result = false;
+        Client client = null;
+        ClientDAO clientDAO = new ClientDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            client = clientDAO.findById(id);
+            client.setClientDisponibilities(new boolean[7][12]);
+            clientDAO.update(client);
+            JpaUtil.validerTransaction();
+            result = true;
+        } catch (Exception ex) {
+            System.out.println(ex);
+            JpaUtil.annulerTransaction();
+            result = false;
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;    
+    }
+    
+    
     public static boolean setTrueClientDisponibility (int day, int hour, Long id) {
         boolean result = true;
         ClientDAO clientDAO = new ClientDAO();
         Client client = null;
         boolean [][] disponibility;
+        boolean [][] newDispo = new boolean[7][12];
         if (day<0 || day > 6 || hour < 0 || hour > 11) {
             result = false;
         }
@@ -243,7 +270,13 @@ public class Service {
                 client = clientDAO.findById(id);
                 disponibility = client.getClientDisponibilities();
                 disponibility[day][hour] = true;
-                client.setClientDisponibilities(disponibility);
+                for (int i = 0; i < 7; i++) {
+                    for (int j = 0; j< 12; j++){
+                        newDispo[i][j] |= disponibility[i][j];
+                    }
+                }
+                
+                client.setClientDisponibilities(newDispo);
                 clientDAO.update(client);
                 JpaUtil.validerTransaction();
             }
@@ -264,31 +297,25 @@ public class Service {
         boolean result = true;
         Client client = null;
         ClientDAO clientDAO = new ClientDAO();
-        if (disponibility.length != 7) {
-            result = false;
-        }
         
+        //Assertion to verify the length
+        assert(disponibility.length == 7);
         for (boolean[] element : disponibility) {
-            if (element.length != 12) {
-                result = false;
-                break;
-            }
+            assert(element.length == 12);
         }
-         
-        if(result) {
-            try {
-                JpaUtil.creerContextePersistance();
-                JpaUtil.ouvrirTransaction();
-                client = clientDAO.findById(id);
-                client.setClientDisponibilities(disponibility);
-                clientDAO.update(client);
-                JpaUtil.validerTransaction();
-            } catch (Exception ex) {
-                result = false;
-                JpaUtil.annulerTransaction();
-            } finally {
-                JpaUtil.fermerContextePersistance();
-            }
+
+        try {
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            client = clientDAO.findById(id);
+            client.setClientDisponibilities(disponibility);
+            clientDAO.update(client);
+            JpaUtil.validerTransaction();
+        } catch (Exception ex) {
+            result = false;
+            JpaUtil.annulerTransaction();
+        } finally {
+            JpaUtil.fermerContextePersistance();
         }
         
         return result;
@@ -418,7 +445,7 @@ public class Service {
     
     
     public static boolean takeAppointment(Long idClient, Long idPublication, LocalDate date, Map<Integer, Set<Integer>> map) {
-        boolean result = false;
+        boolean result = true;
         Client client = null;
         Client worker = null;
         Publication publication = null;
@@ -427,6 +454,7 @@ public class Service {
         PublicationDAO publicationDAO = new PublicationDAO();
         AppointmentDAO appointmentDAO = new AppointmentDAO();
         Client.Status[][] workerActualDispo = null;
+        Client.Status[][] workerNewActualDispo = new Client.Status[7][12];
         boolean[][] workerDispo = null;
         
         try {
@@ -436,17 +464,23 @@ public class Service {
             publication = publicationDAO.findById(idPublication);
             worker = publication.getClient();
             workerActualDispo = worker.getActualDisponibilities(date);
+            if (workerActualDispo == null) {
+                workerActualDispo = worker.addDisponibility(date);
+            }
+            for (int i = 0; i<7; i++) {
+                System.arraycopy(workerActualDispo[i], 0, workerNewActualDispo[i], 0, 12);
+            }
             workerDispo = worker.getClientDisponibilities();
             
             for (Map.Entry<Integer, Set<Integer>> entry : map.entrySet()) {
                 Integer day = entry.getKey();
                 Set<Integer> hourSet = entry.getValue();
                 for (Integer hour : hourSet) {
-                    if (!(workerDispo[day][hour] && (workerActualDispo[day][hour] == Client.Status.FREE))) {
+                    if (!(workerDispo[day][hour] || !(workerActualDispo[day][hour] == Client.Status.FREE))) {
                         result = false;
                         break;
                     } else {
-                        workerActualDispo[day][hour] = Client.Status.TAKEN;
+                        workerNewActualDispo[day][hour] = Client.Status.TAKEN;
                     }
                 }
                 if (!result) {
@@ -455,16 +489,16 @@ public class Service {
             }
             
             if (result) {
-                worker.addDisponibility(date, workerActualDispo);
+                worker.addDisponibility(date, workerNewActualDispo);
                 appointment = new Appointment(date, client, publication, map);
                 appointmentDAO.create(appointment);
                 clientDAO.update(worker);
             }
             JpaUtil.validerTransaction();
-            result = true;
         } catch (Exception ex) {
             result = false;
             System.out.println(ex);
+            ex.printStackTrace();
             JpaUtil.annulerTransaction();
         } finally {
             JpaUtil.fermerContextePersistance();
@@ -543,20 +577,25 @@ public class Service {
         return result;
     }
     
-    public static boolean validatePayment(Long id, Payment.Method method) {
+    public static boolean validatePaymentFromWorker(Long id, Payment.Method method) {
         boolean result = false;
         Payment payment = null;
         Appointment appointment = null;
         AppointmentDAO appointmentDAO = new AppointmentDAO();
-        PaymentDAO paymentDAO = new PaymentDAO();
         
         try {
             JpaUtil.creerContextePersistance();
             JpaUtil.ouvrirTransaction();
             appointment = appointmentDAO.findById(id);
-            payment = new Payment(method, appointment);
-            paymentDAO.create(payment);
-            appointment.setPaid(true);
+            payment = appointment.getPayment();
+            if (payment == null) {
+                payment = new Payment(method, appointment);
+            } else if (payment.getPaymentMethod() == null) {
+                payment.setPaymentMethod(method);
+            }
+            payment.setEmmited(true);
+            payment.setReceived(true);
+            appointment.setPayment(payment);
             appointmentDAO.update(appointment);
             JpaUtil.validerTransaction();
             result = true;
@@ -570,6 +609,41 @@ public class Service {
         
         return result;
     }
+    
+    
+    public static boolean validatePaymentFromClient(Long id, Payment.Method method) {
+        boolean result = false;
+        Payment payment = null;
+        Appointment appointment = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            appointment = appointmentDAO.findById(id);
+            payment = appointment.getPayment();
+            if (payment == null) {
+                payment = new Payment(method, appointment);
+            } else {
+                payment.setPaymentMethod(method);
+            }
+            payment.setEmmited(true);
+            appointment.setPayment(payment);
+            appointmentDAO.update(appointment);
+            JpaUtil.validerTransaction();
+            result = true;
+        } catch (Exception ex) {
+            System.out.println(ex);
+            JpaUtil.annulerTransaction();
+            result = false;
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        return result;
+    }
+    
+    
     
     public static boolean updatePublicationTitle(Long id, String title) {
         boolean result = false;
@@ -707,20 +781,104 @@ public class Service {
     } */
     
     
+    public static boolean cancelAppointment(Long id) {
+        boolean result = false;
+        Appointment appointment = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        Client client = null;
+        ClientDAO clientDAO = new ClientDAO();
+        Map<Integer, Set<Integer>> duration;
+        boolean[][]  disponibilities;
+        Client.Status[][] newActualDispo = new Client.Status[7][12];
+        Client.Status[][] actualDispo;
+        int year;
+        int week;
+        LocalDate localDate;
+        
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            appointment = appointmentDAO.findById(id);
+            client = appointment.getPublication().getClient();
+            disponibilities = client.getClientDisponibilities();
+            year = appointment.getDateAppointment().getFirst();
+            week = appointment.getDateAppointment().getSecond();
+            localDate = LocalDate.of(year, 1, 1)
+                .with(WeekFields.of(Locale.getDefault()).weekOfYear(), week)
+                .with(WeekFields.of(Locale.getDefault()).dayOfWeek(), 1);
+            actualDispo = client.getActualDisponibilities(localDate);
+            duration = appointment.getDuration();
+            
+            for (int i = 0; i<7; i++) {
+                System.arraycopy(actualDispo[i], 0, newActualDispo[i], 0, 12);
+            }
+            
+            for (Map.Entry<Integer, Set<Integer>> entry : duration.entrySet()) {
+                int day = entry.getKey();
+                for (int hour : entry.getValue()) {
+                    newActualDispo[day][hour] = disponibilities[day][hour] ? Client.Status.FREE : Client.Status.NOT_FREE;
+                }
+            }
+            
+            client.addDisponibility(localDate, newActualDispo);
+            appointment.setStatus(Appointment.Status.CANCELLED);
+            clientDAO.update(client);
+            appointmentDAO.update(appointment);
+            JpaUtil.validerTransaction();
+            result = true;
+        } catch (Exception ex) {
+            JpaUtil.annulerTransaction();
+            System.out.println(ex);
+            result = false;
+        }
+        
+        return result;
+    }
+    
+   
+       
     public static boolean validateAppointment(Long id) {
         boolean result = false;
         Appointment appointment = null;
         AppointmentDAO appointmentDAO = new AppointmentDAO();
+        Payment payment = null;
+        Pair<Integer, Integer> yearWeek;
+        Map<Integer, Set<Integer>> duration;
+
+        // Obtenir la dernière date et heure de l'appointment
+        int lastDayOfWeek;
+        Set<Integer> lastHoursSet;
+        int lastHour;
+
+        // Convertir l'année et la semaine en date
+        LocalDate startOfWeek;  // Premier jour de la semaine
+
+        // Calculer la date et heure exacte du dernier créneau
+        LocalDateTime endDateTime;
         
         try {
             JpaUtil.creerContextePersistance();
             JpaUtil.ouvrirTransaction();
             appointment = appointmentDAO.findById(id);
             
-            if (appointment.getDate().isAfter(LocalDate.now())) {
+            yearWeek = appointment.getDateAppointment();
+            duration  = appointment.getDuration();
+            lastDayOfWeek = duration.keySet().stream().max(Integer::compareTo).orElse(0);
+            lastHoursSet = duration.get(lastDayOfWeek);
+            lastHour = lastHoursSet.stream().max(Integer::compareTo).orElse(0);
+            startOfWeek = LocalDate.of(yearWeek.getFirst(), 1, 1)
+                .with(WeekFields.ISO.weekOfYear(), yearWeek.getSecond())
+                .with(WeekFields.ISO.dayOfWeek(), 1);
+            endDateTime = startOfWeek.plusDays(lastDayOfWeek - 1)
+                .atTime(9 + lastHour, 0);
+            
+            if (!endDateTime.isBefore(LocalDateTime.now())) {
                 result = false;
             } else {
                 appointment.setStatus(Appointment.Status.PASSED);
+                payment = new Payment(null, appointment);
+                appointment.setPayment(payment);
                 appointmentDAO.update(appointment);
                 result = true;
         }
@@ -755,7 +913,7 @@ public class Service {
                 appointment = appointmentDAO.findById(id);
                 publication = appointment.getPublication();
                 numberNotes = publication.getNumberNotes();
-                publication.setAverage((publication.getAverage()*numberNotes+note)/(numberNotes+1));
+                publication.setAverage(((publication.getAverage()== null ? 0 : publication.getAverage())*numberNotes+note)/(numberNotes+1));
                 appointment.setNote(note);
                 publication.setNumberNotes(numberNotes+1);
                 publicationDAO.update(publication);
@@ -763,6 +921,7 @@ public class Service {
                 JpaUtil.validerTransaction();                
             } catch (Exception ex) {
                 System.out.println(ex);
+                ex.printStackTrace();
                 JpaUtil.annulerTransaction();
                 result = false;
             } finally {
@@ -844,6 +1003,31 @@ public class Service {
         return payment;
     }
     
+    public static Client.Status[][] getActualDispo(Long id, LocalDate date) {
+        Client.Status[][] result = null;
+        Client client = null;
+        ClientDAO clientDAO = new ClientDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            client = clientDAO.findById(id);
+            result = client.getActualDisponibilities(date);
+            if (result == null) {
+                result = client.addDisponibility(date);
+                clientDAO.update(client);
+            }
+            JpaUtil.validerTransaction();
+        } catch (Exception ex) {
+            System.out.println(ex);
+            JpaUtil.annulerTransaction();
+            result = null;
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
+    
     
     public static Publication getPublicationById(Long id) {
         Publication publication = null;
@@ -893,6 +1077,30 @@ public class Service {
     }
     
     
+    public static boolean setClientFirstName(Long id, String firstName) {
+        Client client = null;
+        ClientDAO clientDAO = new ClientDAO();
+        boolean result = false;
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            client = clientDAO.findById(id);
+            client.setFirstName(firstName);
+            clientDAO.update(client);
+            JpaUtil.validerTransaction();
+            result = true;
+        } catch (Exception ex) {
+            System.out.println(ex);
+            JpaUtil.annulerTransaction();
+            result = false;
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
+    
+    
     public static boolean setDistanceMax(Long id, Double distanceMax) {
         boolean result = false;
         Publication publication = null;
@@ -916,13 +1124,19 @@ public class Service {
         return result;
     }
     
-    public static List<Publication> getListPublicationDistance(double distance) {
+    public static List<Publication> getListPublicationDistance(double distance, String workType) {
         List<Publication> result = null;
         PublicationDAO publicationDAO = new PublicationDAO();
+        WorkTypeDAO workTypeDAO = new WorkTypeDAO();
         
         try {
             JpaUtil.creerContextePersistance();
-            result = publicationDAO.getListApproved(distance);
+            if (workType == null) {
+                result = publicationDAO.getListApproved(distance);
+            }
+            else {
+                result = publicationDAO.getListApprovedByWorkType(distance, workTypeDAO.findById(workType));
+            }
         } catch (Exception ex) {
             System.out.println(ex);
         } finally {
@@ -948,5 +1162,310 @@ public class Service {
         return result;
     }
     
+    public static boolean isClientPublication(Long clientId, Long publicationId) {
+        ClientDAO clientDAO = new ClientDAO();
+        PublicationDAO publicationDAO = new PublicationDAO();
+        boolean result = false;
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = (clientDAO.findById(clientId) == publicationDAO.findById(publicationId).getClient());
+        } catch (Exception ex) {
+            System.out.println(ex);
+            result = false;
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
+    
+    
+    
+    public static List<Appointment> getNextsAppointmentAsClient (Long id) {
+        List<Appointment> result = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = appointmentDAO.getNextsAppointmentAsClient(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
+    
+    
+    public static List<Appointment> getNextsAppointmentAsWorker (Long id) {
+        List<Appointment> result = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = appointmentDAO.getNextsAppointmentAsWorker(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
+    
+    
+    public static List<Appointment> getPassedAppointmentAsClient (Long id) {
+        List<Appointment> result = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = appointmentDAO.getPassedAppointmentsAsClient(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
+    
+    
+    public static List<Appointment> getPassedAppointmentAsWorker (Long id) {
+        List<Appointment> result = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = appointmentDAO.getPassedAppointmentsWorker(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
+    
+    
+    
+    
+    
+    public static boolean suppressPublication(Long id) {
+        boolean result = false;
+        Publication publication = null;
+        PublicationDAO publicationDAO = new PublicationDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            publication = publicationDAO.findById(id);
+            publicationDAO.delete(publication);
+            JpaUtil.validerTransaction();
+            result = true;
+        } catch (Exception ex) {
+            System.out.println(ex);
+            JpaUtil.annulerTransaction();
+            result = false;
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
+    
+    
+    public static List<Appointment> getToPayAppointment(Long id) {
+        List<Appointment> result = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = appointmentDAO.getToPayAppointment(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        return result;
+    }
+    
+    
+    
+    public static Integer getPriceOfAppointment(Long id) {
+        Appointment appointment = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        Integer result;
+        try {
+            JpaUtil.creerContextePersistance();
+            appointment = appointmentDAO.findById(id);
+            result = appointment.getPrice();
+        } catch (Exception ex) {
+            System.out.println(ex);
+            result = null;
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }       
+        
+        return result;
+    }
+    
+    
+    public static boolean addAdmin(String mail, String rawPassword) {
+        boolean result = false;
+        Admin admin = null;
+        AdminDAO adminDAO = new AdminDAO();
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String hashPassword = passwordEncoder.encode(rawPassword);
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            admin = new Admin(mail, hashPassword);
+            adminDAO.create(admin);
+            JpaUtil.validerTransaction();
+            result = true;
+        } catch (Exception ex) {
+            System.out.println(ex);
+            result = false;
+            JpaUtil.annulerTransaction();
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        
+        return result;
+    }
+    
+    public static Admin authenticateAdmin(String mail, String password) {
+        Admin admin = null;
+        AdminDAO adminDAO = new AdminDAO();
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            admin = adminDAO.findByMail(mail);
+            if (admin == null || !passwordEncoder.matches(password, admin.getHashedPassword())) {
+                admin = null;
+            }
+            
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        return admin;
+    }
+    
+    
+    public static List<Client> getListClient() {
+        List<Client> result = null;
+        ClientDAO clientDAO = new ClientDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = clientDAO.getListClient();
+        } catch (Exception ex) {
+            System.out.println(ex);            
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        return result;
+    }
+    
+    
+    public static Admin getAdminById(Long id) {
+        Admin admin = null;
+        AdminDAO adminDAO = new AdminDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            admin = adminDAO.findById(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        return admin;
+    }
+    
+    
+    public static boolean updatePassedAppointments() {
+        boolean result = true;
+        List<Appointment> appointmentList;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            JpaUtil.ouvrirTransaction();
+            appointmentList = appointmentDAO.getPassedAppointments();
+            
+            for (Appointment appointment : appointmentList) {
+                Pair<Integer, Integer> yearWeek = appointment.getDateAppointment();
+                Map<Integer, Set<Integer>> duration  = appointment.getDuration();
+                int lastDayOfWeek = duration.keySet().stream().max(Integer::compareTo).orElse(0);
+                Set<Integer> lastHoursSet = duration.get(lastDayOfWeek);
+                int lastHour = lastHoursSet.stream().max(Integer::compareTo).orElse(0);
+                LocalDate startOfWeek = LocalDate.of(yearWeek.getFirst(), 1, 1)
+                    .with(WeekFields.ISO.weekOfYear(), yearWeek.getSecond())
+                    .with(WeekFields.ISO.dayOfWeek(), 1);
+                LocalDateTime endDateTime = startOfWeek.plusDays(lastDayOfWeek - 1)
+                    .atTime(9 + lastHour, 0);
+                
+                if (!endDateTime.isBefore(LocalDateTime.now())) {
+                    break;
+                } else {
+                    appointment.setStatus(Appointment.Status.PASSED);
+                    Payment payment = new Payment(null, appointment);
+                    appointment.setPayment(payment);
+                    appointmentDAO.update(appointment);
+                }                
+            }
+            JpaUtil.validerTransaction();
+            result =true;
+        } catch (Exception ex) {
+            JpaUtil.annulerTransaction();
+            System.out.println(ex);
+            result = false;
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        
+        
+        
+        return result;
+    }
+    
+    
+    public static List<Appointment> getCanceledAppointmentAsClient (Long id) {
+        List<Appointment> result = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = appointmentDAO.getCanceledAppointmentsAsClient(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
+    
+    
+    public static List<Appointment> getCanceledAppointmentAsWorker (Long id) {
+        List<Appointment> result = null;
+        AppointmentDAO appointmentDAO = new AppointmentDAO();
+        
+        try {
+            JpaUtil.creerContextePersistance();
+            result = appointmentDAO.getCanceledAppointmentsAsWorker(id);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            JpaUtil.fermerContextePersistance();
+        }
+        return result;
+    }
     
 }

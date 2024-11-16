@@ -10,11 +10,14 @@
     <class>Converters.BooleanDoubleTableConverter</class>
     <class>Converters.PairConverter</class>
     <class>Converters.StatusDoubleTableConverter</class>
+    <class>Converters.SetIntegerConverter</class>
+    <class>Metier.Modele.Admin</class>
     <properties>
-      <property name="javax.persistence.jdbc.url" value="jdbc:derby://localhost:1527/database"/>
+      <property name="javax.persistence.jdbc.url" value="jdbc:derby://localhost:1527/database;encoding=UTF-8"/>
       <property name="javax.persistence.jdbc.user" value="database"/>
       <property name="javax.persistence.jdbc.driver" value="org.apache.derby.client.ClientAutoloadedDriver"/>
       <property name="javax.persistence.jdbc.password" value="database"/>
+      <property name="eclipselink.cache.shared.default" value="false"/>
       <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
     </properties>
   </persistence-unit>

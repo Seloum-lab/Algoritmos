@@ -5,20 +5,27 @@
 package Converters;
 
 import Metier.Modele.Client;
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import org.eclipse.persistence.mappings.DatabaseMapping;
+import org.eclipse.persistence.mappings.converters.Converter;
+import org.eclipse.persistence.sessions.Session;
+
 
 /**
  *
  * @author DeLL
  */
-@Converter(autoApply = true)
-public class StatusDoubleTableConverter implements AttributeConverter<Metier.Modele.Client.Status[][], String> {
-    private static final String TABLESEPARATOR = "; ";
-    private static final String SEPARATOR = ", ";
+
+public class StatusDoubleTableConverter implements Converter{
+    private static final String TABLESEPARATOR = ";";
+    private static final String SEPARATOR = ",";
     
     @Override
-    public String convertToDatabaseColumn(Client.Status[][] doubleTable) {
+    public String convertObjectValueToDataValue(Object objectValue, Session session) {
+        if (objectValue == null) {
+            return null;
+        }
+        
+        Client.Status[][] doubleTable = (Client.Status[][]) objectValue;
         StringBuilder result = new StringBuilder();
         assert(doubleTable.length == 7);
 
@@ -35,12 +42,15 @@ public class StatusDoubleTableConverter implements AttributeConverter<Metier.Mod
         result.setLength(result.length() - TABLESEPARATOR.length());
         return result.toString();
     }
-
+    
     @Override
-    public Client.Status[][] convertToEntityAttribute(String dbDoubleTable) {
-        Client.Status[][] result = new Client.Status[7][12];
-        if (dbDoubleTable == null || dbDoubleTable.isEmpty())
+    public Object convertDataValueToObjectValue(Object dataValue, Session session) {
+        if (dataValue == null || ((String) dataValue).isEmpty())
             return null;
+        
+        Client.Status[][] result = new Client.Status[7][12];
+        String dbDoubleTable = (String) dataValue;
+        
         
         String[] doubleTable = dbDoubleTable.split(TABLESEPARATOR);
         assert(doubleTable.length == 7);
@@ -58,6 +68,14 @@ public class StatusDoubleTableConverter implements AttributeConverter<Metier.Mod
         return result;
     }
 
-   
+    @Override
+    public boolean isMutable() {
+        return true;
+    }
     
+    @Override
+    public void initialize(DatabaseMapping dm, Session sn) {
+    }
+
+       
 }

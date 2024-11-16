@@ -5,6 +5,8 @@
 package DAO;
 
 import Metier.Modele.Client;
+import java.util.Arrays;
+import java.util.List;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 
@@ -41,6 +43,14 @@ public class ClientDAO {
             res = null;            
         }
         return res;
+    }
+    
+    
+    public List<Client> getListClient() {
+        String query = "SELECT c FROM Client c"; 
+        TypedQuery tpQuery = JpaUtil.obtenirContextePersistance().createQuery(query, Client.class); 
+        
+        return tpQuery.getResultList();
     }
     
     

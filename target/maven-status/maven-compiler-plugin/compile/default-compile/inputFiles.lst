@@ -1,13 +1,14 @@
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\DAO\AppointmentDAO.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\DAO\JpaUtil.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Metier\Modele\Payment.java
-C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Converters\PairConverterOld.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Metier\Service\Service.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\DAO\PublicationDAO.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Metier\Service\GeoNetApi.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\DAO\PaymentDAO.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Utils\Pair.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Metier\Modele\Publication.java
+C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Metier\Modele\Admin.java
+C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\DAO\AdminDAO.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Converters\StatusDoubleTableConverter.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\main\Main.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Metier\Modele\Appointment.java
@@ -17,3 +18,4 @@ C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\DAO\ClientDAO.
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Metier\Modele\Client.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Converters\PairConverter.java
 C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\DAO\WorkTypeDAO.java
+C:\Users\DeLL\Documents\NetBeansProjects\Algoritmos\src\main\java\Converters\SetIntegerConverter.java

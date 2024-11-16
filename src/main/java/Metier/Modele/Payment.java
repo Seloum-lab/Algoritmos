@@ -5,6 +5,7 @@
 package Metier.Modele;
 
 import java.io.Serializable;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -12,6 +13,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
+import javax.persistence.PrePersist;
 
 /**
  *
@@ -34,8 +36,21 @@ public class Payment implements Serializable {
     @Enumerated(EnumType.STRING)
     private Method paymentMethod;
     
-    @OneToOne
+    @OneToOne(mappedBy = "payment")
     private Appointment appointment;
+    
+    @Column(nullable = false)
+    private boolean received;
+    
+    @Column(nullable = false)
+    private boolean emmited;
+    
+    
+    @PrePersist
+    public void prePerist() {
+        received = false;
+        emmited = false;
+    }
 
     public Payment() {
     }
@@ -44,6 +59,25 @@ public class Payment implements Serializable {
         this.paymentMethod = paymentMethod;
         this.appointment = appointment;
     }
+
+    public boolean isReceived() {
+        return received;
+    }
+
+    public void setReceived(boolean received) {
+        this.received = received;
+    }
+
+    public boolean isEmmited() {
+        return emmited;
+    }
+
+    public void setEmmited(boolean emmited) {
+        this.emmited = emmited;
+    }
+    
+    
+    
 
     public Long getId() {
         return id;

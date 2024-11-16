@@ -4,23 +4,55 @@
  */
 package Converters;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
 
 /**
  *
  * @author DeLL
  */
-@Converter(autoApply = true)
-public class BooleanDoubleTableConverter implements AttributeConverter<boolean[][], String>{
-    private static final String TABLESEPARATOR = "; ";
-    private static final String SEPARATOR = ", ";
+import org.eclipse.persistence.mappings.DatabaseMapping;
+import org.eclipse.persistence.mappings.converters.Converter;
+import org.eclipse.persistence.sessions.Session;
+
+public class BooleanDoubleTableConverter implements Converter {
+    
+    private static final String TABLESEPARATOR = ";";
+    private static final String SEPARATOR = ",";
 
     @Override
-    public String convertToDatabaseColumn(boolean[][] doubleTable) {
-        StringBuilder result = new StringBuilder();
+    public Object convertDataValueToObjectValue(Object dataValue, Session session) {
+        // Conversion de String à boolean[][]
+        if (dataValue == null || ((String) dataValue).isEmpty()) {
+            return null;
+        }
+        
+        String dbDoubleTable = (String) dataValue;
+        boolean[][] result = new boolean[7][12];
+
+        String[] doubleTable = dbDoubleTable.split(TABLESEPARATOR);
         assert(doubleTable.length == 7);
 
+        for (int i = 0; i < 7; i++) {
+            String[] table = doubleTable[i].split(SEPARATOR);
+            assert(table.length == 12);
+            for (int j = 0; j < 12; j++) {
+                result[i][j] = ("t".equals(table[j]));
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public Object convertObjectValueToDataValue(Object objectValue, Session session) {
+        // Conversion de boolean[][] à String
+        if (objectValue == null) {
+            return null;
+        }
+        
+        boolean[][] doubleTable = (boolean[][]) objectValue;
+        StringBuilder result = new StringBuilder();
+
+        assert(doubleTable.length == 7);
         for (boolean[] table : doubleTable) {
             assert(table.length == 12);
             for (boolean dispo : table) {
@@ -30,29 +62,16 @@ public class BooleanDoubleTableConverter implements AttributeConverter<boolean[]
             result.append(TABLESEPARATOR);
         }
         
-
         result.setLength(result.length() - TABLESEPARATOR.length());
         return result.toString();
     }
 
     @Override
-    public boolean[][] convertToEntityAttribute(String dbDoubleTable) {
-        boolean[][] result = new boolean[7][12];
-        if (dbDoubleTable == null || dbDoubleTable.isEmpty())
-            return null;
-        
-        String[] doubleTable = dbDoubleTable.split(TABLESEPARATOR);
-        assert(doubleTable.length == 7);
-        
-        for (int i = 0; i<7; i++) {
-            String[] table = doubleTable[i].split(SEPARATOR);
-            assert(table.length == 12);
-            for (int j = 0; j<12; j++) {
-                result[i][j] = ("t".equals(table[j]));
-            }
-        }
-        
-        return result;
+    public boolean isMutable() {
+        return true;
     }
-    
+
+    @Override
+    public void initialize(DatabaseMapping dm, Session sn) {
+    }
 }

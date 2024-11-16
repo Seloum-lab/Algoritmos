@@ -13,10 +13,10 @@ import java.time.LocalDate;
 import java.time.temporal.IsoFields;
 import java.util.Map;
 import java.util.Set;
+import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -27,6 +27,7 @@ import javax.persistence.MapKeyColumn;
 import javax.persistence.OneToMany;
 import org.eclipse.persistence.annotations.MapKeyConvert;
 import org.eclipse.persistence.annotations.Converter;
+import org.eclipse.persistence.annotations.Convert;
 import org.eclipse.persistence.indirection.IndirectMap;
 
 /**
@@ -50,36 +51,53 @@ public class Client implements Serializable {
     
     private String firstName;
     private String lastName;
+    
     @Column(unique = true)
     private String mail;
+    
+    @Column(unique = true)
     private String phoneNumber;
+    
     private String password;
     private Double latitude;
     private Double longitude;
     private String address;
     
-    private boolean[][] clienDisponibilities;
+    @Basic
+    @Converter(name = "BoolTableConverter", converterClass = BooleanDoubleTableConverter.class)
+    @Convert("BoolTableConverter")
+    @Column(columnDefinition = "VARCHAR(255)", name = "Dispo")
+    private boolean[][] clientDisponibilities;
     
     @ElementCollection
     @CollectionTable(name = "actual_disponibilities", joinColumns = @JoinColumn(name = "client_id"))
     @MapKeyColumn(name = "date")
-    @Column(name = "disponibility", length=10000)
+    @Column(name = "disponibility", columnDefinition = "VARCHAR (1000)")
     @Converter(name="PairConverter", converterClass = PairConverter.class)
     @MapKeyConvert("PairConverter")
+    @Converter(name = "StatusTableConverter", converterClass = StatusDoubleTableConverter.class)
+    @Convert("StatusTableConverter")
     private Map<Pair<Integer, Integer>, Status[][]>actualDisponibilities;
     
     
-    public void addDisponibility(LocalDate date, Status[][] disponibility) {
+    public Status[][] addDisponibility(LocalDate date, Status[][] disponibility) {
+        if (this.clientDisponibilities == null) {
+            return null;
+        }
         int year = date.getYear();
         int weekOfYear = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
         this.actualDisponibilities.put(new Pair(year, weekOfYear), disponibility);
+        return disponibility;
     }
     
-    public void addDisponibility(LocalDate date) {
+    public Status[][] addDisponibility(LocalDate date) throws Exception{
+        if (this.clientDisponibilities == null) {
+            return null;
+        }
         Status disponibility[][] = new Status[7][12];
         for (int day = 0; day<7; day++) {
             for (int hour = 0; hour<12; hour++) {
-                if (this.clienDisponibilities[day][hour])
+                if (this.clientDisponibilities[day][hour])
                     disponibility[day][hour] = Status.FREE;
                 else disponibility[day][hour] = Status.NOT_FREE;
             }
@@ -87,6 +105,7 @@ public class Client implements Serializable {
         int year = date.getYear();
         int weekOfYear = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
         this.actualDisponibilities.put(new Pair(year, weekOfYear), disponibility);
+        return disponibility;
     }
     
     public void addPublication(Publication publication) {
@@ -100,7 +119,6 @@ public class Client implements Serializable {
         this.phoneNumber = phoneNumber;
         this.password = password;
         this.address = address;
-        this.clienDisponibilities = new boolean[7][12];
         this.actualDisponibilities = new IndirectMap<>();
     }
 
@@ -113,19 +131,16 @@ public class Client implements Serializable {
     }
 
     public boolean[][] getClientDisponibilities() {
-        return clienDisponibilities;
+        return clientDisponibilities;
     }
 
-    public void setClientDisponibilities(boolean[][] clienDisponibilities) {
-        this.clienDisponibilities = clienDisponibilities;
+    public void setClientDisponibilities(boolean[][] clientDisponibilities) {
+        this.clientDisponibilities = clientDisponibilities;
     }
-
-    public Status[][] getActualDisponibilities(LocalDate date) {
+    
+    public Status[][] getActualDisponibilities (LocalDate date){
         int year = date.getYear();
         int weekOfYear = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
-        if (this.actualDisponibilities.get(new Pair(year, weekOfYear)) == null) {
-            addDisponibility(date);
-        }
         return this.actualDisponibilities.get(new Pair(year, weekOfYear));
     }
     

@@ -5,6 +5,7 @@
 package DAO;
 
 import Metier.Modele.Publication;
+import Metier.Modele.WorkType;
 import java.util.List;
 import javax.persistence.TypedQuery;
 
@@ -42,6 +43,19 @@ public class PublicationDAO {
         return result;
     }
     
+    public List<Publication> getListApprovedByWorkType(double distance, WorkType workType) {
+        List<Publication> result = null;
+        String query = "SELECT p FROM Publication p WHERE p.status = :status and p.workType = :workType order by p.date";
+        TypedQuery tpQuery = JpaUtil.obtenirContextePersistance().createQuery(query, Publication.class);
+        tpQuery.setParameter("status", Publication.Status.APPROVED);
+        tpQuery.setParameter("workType", workType);
+        
+        result = (List<Publication>) tpQuery.getResultList();
+        
+        
+        return result;
+    }
+        
     public List<Publication> getListWaiting() {
         List<Publication> result = null;
         String query = "SELECT p FROM Publication p WHERE p.status = :status order by p.date";
@@ -51,6 +65,17 @@ public class PublicationDAO {
         result = (List<Publication>) tpQuery.getResultList();
         
         
+        return result;
+    }
+    
+    
+    public List<Publication> getListByWorkType(WorkType workType) {
+        List<Publication> result = null;
+        String query = "SELECT p FROM Publication p WHERE p.workType = :workType order by p.date";
+        TypedQuery tpQuery = JpaUtil.obtenirContextePersistance().createQuery(query, Publication.class);
+        tpQuery.setParameter("workType", workType);
+        
+        result = (List<Publication>) tpQuery.getResultList();
         return result;
     }
     

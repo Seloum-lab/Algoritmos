@@ -14,12 +14,10 @@ import Utils.Pair;
 import org.eclipse.persistence.mappings.converters.Converter;
 import org.eclipse.persistence.sessions.Session;
 import org.eclipse.persistence.mappings.DatabaseMapping;
-import org.eclipse.persistence.mappings.foundation.AbstractCompositeCollectionMapping;
 
 
 public class PairConverter implements Converter {
-
-    private static final String SEPARATOR = ", ";
+    private static final String SEPARATOR = ",";
     // Convertit l'objet Pair en une chaîne (par exemple "10,20")
     @Override
     public Object convertObjectValueToDataValue(Object objectValue, Session session) {
@@ -37,6 +35,8 @@ public class PairConverter implements Converter {
             return null; 
         }
         String[] parts = str.split(SEPARATOR);
+        for (String element : parts) {
+        }
         Integer key = Integer.parseInt(parts[0]);
         Integer value = Integer.parseInt(parts[1]);
         return new Pair(key, value); 

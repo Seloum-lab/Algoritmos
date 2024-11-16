@@ -28,7 +28,8 @@ public class Publication implements Serializable {
     public enum Status {
         WAITING,
         APPROVED,
-        REJECTED
+        REJECTED,
+        SUPPRESSED
     }
     
     
@@ -43,7 +44,7 @@ public class Publication implements Serializable {
     @Column(nullable=false)
     private Integer numberNotes;
     
-    @Column(nullable=false)
+    @Column(nullable=true)
     private Float average;
     
     @ManyToOne(optional = false)
@@ -53,13 +54,14 @@ public class Publication implements Serializable {
     @Column(nullable = false)
     private Date date;
     
-    @ManyToOne
+    @ManyToOne(optional=false)
     @JoinColumn(nullable = false)
     private WorkType workType;
     
     
     @Column(nullable = false)
     private Integer price;
+    
     
     @Enumerated(EnumType.STRING)
     private Status status;
@@ -73,9 +75,6 @@ public class Publication implements Serializable {
         }
         if (numberNotes == null) {
             numberNotes = 0;
-        }
-        if (average == null) {
-            average = (float) -1;
         }
     }
 

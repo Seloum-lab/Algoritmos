@@ -1,13 +1,16 @@
 DAO\WorkTypeDAO.class
 Metier\Modele\Appointment_.class
+Metier\Modele\Admin.class
 Metier\Service\GeoNetApi.class
 Converters\StatusDoubleTableConverter.class
 DAO\ClientDAO.class
 main\Main.class
+DAO\AdminDAO.class
 Utils\Pair.class
 Metier\Modele\Appointment.class
 DAO\PaymentDAO.class
 Metier\Modele\Payment$Method.class
+Metier\Modele\Admin_.class
 Metier\Modele\Appointment$Status.class
 Metier\Modele\Publication$Status.class
 Metier\Modele\Publication.class
@@ -19,7 +22,6 @@ DAO\JpaUtil.class
 Metier\Modele\Payment_.class
 DAO\AppointmentDAO.class
 Metier\Modele\Publication_.class
-Converters\PairConverterOld.class
 Metier\Modele\Client$Status.class
 Metier\Modele\Client.class
 Converters\PairConverter.class
@@ -27,3 +29,4 @@ DAO\PublicationDAO.class
 DAO\JpaUtil$1.class
 Converters\BooleanDoubleTableConverter.class
 Metier\Modele\WorkType_.class
+Converters\SetIntegerConverter.class
