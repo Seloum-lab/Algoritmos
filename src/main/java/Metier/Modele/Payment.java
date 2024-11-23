@@ -5,6 +5,7 @@
 package Metier.Modele;
 
 import java.io.Serializable;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -36,7 +37,7 @@ public class Payment implements Serializable {
     @Enumerated(EnumType.STRING)
     private Method paymentMethod;
     
-    @OneToOne(mappedBy = "payment")
+    @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL)
     private Appointment appointment;
     
     @Column(nullable = false)

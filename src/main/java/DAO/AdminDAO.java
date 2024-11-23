@@ -33,7 +33,7 @@ public class AdminDAO {
     public Admin findByMail(String mail) {
         Admin res = null; //On intialise la valeur de retour
         try {
-        String query = "SELECT c FROM Admin c WHERE c.mail = :mail"; 
+        String query = "SELECT a FROM Admin a WHERE a.mail = :mail"; 
         TypedQuery tpQuery = JpaUtil.obtenirContextePersistance().createQuery(query, Admin.class); 
         tpQuery.setParameter("mail", mail); 
         
